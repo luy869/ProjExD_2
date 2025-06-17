@@ -11,87 +11,63 @@ sbb_accs = [a for a in range(1, 11)]
 
 
 def main() -> None:
-    vx = random.randint(0,1100)
-    vy = random.randint(0,650)
+    vx, vy = random.randint(0, WIDTH), random.randint(0, HEIGHT)
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bb_imgs, bb_accs = make_bomb_imgs_accs()
-    bb_img = bb_imgs[0]
-    pg.draw.circle(bb_img, (255, 0, 0), (10, 10), 10)
-    bb_img.set_colorkey((0, 0, 0))
-    bg_img = pg.image.load("fig/pg_bg.jpg")    
-    kk_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 0.9)
-    bb_rct = bb_img.get_rect()
-    bb_rct.center = vx,vy
-    kk_rct = kk_img.get_rect()
-    kk_rct.center = 300, 200
+    bg_img = pg.image.load("fig/pg_bg.jpg")
+    kk_img = get_kk_img((0, 0))
+    bb_rct = bb_imgs[0].get_rect(center=(vx, vy))
+    kk_rct = kk_img.get_rect(center=(300, 200))
     clock = pg.time.Clock()
-    tmr = 0
-    numx, numy = 5.0, 5.0
-    orient_timer = 0
-    orient_next = random.randint(100, 250)
+    tmr, numx, numy = 0, 5.0, 5.0
+    orient_timer, orient_next = 0, random.randint(100, 250)
 
     while True:
         for event in pg.event.get():
-            if event.type == pg.QUIT: 
+            if event.type == pg.QUIT:
                 return
-        screen.blit(bg_img, [0, 0]) 
-        vx += numx
-        vy += numy
 
         key_lst = pg.key.get_pressed()
-        DELTA = {
-            pg.K_UP:    (0, -5),
-            pg.K_DOWN:  (0, +5),
-            pg.K_LEFT:  (-5, 0),
-            pg.K_RIGHT: (+5, 0)
-        }
-        sum_mv = [0, 0]
-        for key, (dx, dy) in DELTA.items():
-            if key_lst[key]:
-                sum_mv[0] += dx
-                sum_mv[1] += dy
+        dx = (key_lst[pg.K_RIGHT] - key_lst[pg.K_LEFT]) * 5
+        dy = (key_lst[pg.K_DOWN] - key_lst[pg.K_UP]) * 5
+        # 斜め補正
+        if dx and dy:
+            dx = int(dx / 1.4142)
+            dy = int(dy / 1.4142)
         old_pos = kk_rct.topleft
-        kk_rct.move_ip(sum_mv)
-        bb_rct.move_ip(numx, numy)
+        kk_rct.move_ip(dx, dy)
+        kk_img = get_kk_img((dx, dy))
 
-        # こうかとん画像の向きを移動量に応じて切り替え
-        kk_img = get_kk_img(tuple(sum_mv))
-
-        screen.blit(bg_img, [0, 0])
-        screen.blit(bb_img, bb_rct)
-        screen.blit(kk_img, kk_rct)
-        pg.display.update()
-        tmr += 1
-        clock.tick(50)
-
-        # こうかとんが画面外に出ない処理
-        x_ok, y_ok = check_bound(kk_rct)
-        if not x_ok or not y_ok:
-            kk_rct.topleft = old_pos
-            screen.blit(kk_img, kk_rct)
-
-        x_ok, y_ok = check_bound(bb_rct)
-        if not x_ok:
-            numx *= -1  
-        if not y_ok:
-            numy *= -1  
-
-        if kk_rct.colliderect(bb_rct):
-            GameOver()
-
+        # 爆弾の向き更新
         orient_timer += 1
         if orient_timer >= orient_next:
             numx, numy = calc_orientation(bb_rct, kk_rct, (numx, numy))
             orient_timer = 0
             orient_next = random.randint(100, 250)
 
-        # tmrの値に応じて段階を決定
         idx = min(tmr // 500, 9)
         bb_img = bb_imgs[idx]
         acc = bb_accs[idx]
         bb_rct = bb_img.get_rect(center=bb_rct.center)
         bb_rct.move_ip(numx * acc, numy * acc)
-        
+
+        # 画面外判定
+        if not all(check_bound(kk_rct)):
+            kk_rct.topleft = old_pos
+        x_ok, y_ok = check_bound(bb_rct)
+        if not x_ok: numx *= -1
+        if not y_ok: numy *= -1
+
+        # 描画・判定
+        screen.blit(bg_img, (0, 0))
+        screen.blit(bb_img, bb_rct)
+        screen.blit(kk_img, kk_rct)
+        pg.display.update()
+        tmr += 1
+        clock.tick(50)
+        if kk_rct.colliderect(bb_rct):
+            GameOver()
+
 def check_bound(rct: pg.Rect) -> tuple[bool, bool]:
     x_ok: bool = True  
     y_ok: bool = True  
