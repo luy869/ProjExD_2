@@ -10,7 +10,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 sbb_accs = [a for a in range(1, 11)]
 
 
-def main():
+def main() -> None:
     vx = random.randint(0,1100)
     vy = random.randint(0,650)
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -64,7 +64,7 @@ def main():
         tmr += 1
         clock.tick(50)
 
-        # こうかとんが画面外に出ないように修正
+        # こうかとんが画面外に出ない処理
         x_ok, y_ok = check_bound(kk_rct)
         if not x_ok or not y_ok:
             kk_rct.topleft = old_pos
@@ -92,16 +92,16 @@ def main():
         bb_rct = bb_img.get_rect(center=bb_rct.center)
         bb_rct.move_ip(numx * acc, numy * acc)
         
-def check_bound(rct):
-    x_ok = True  
-    y_ok = True  
+def check_bound(rct: pg.Rect) -> tuple[bool, bool]:
+    x_ok: bool = True  
+    y_ok: bool = True  
     if rct.left < 0 or rct.right > WIDTH:
         x_ok = False
     if rct.top < 0 or rct.bottom > HEIGHT:
         y_ok = False
     return x_ok, y_ok
 
-def GameOver():
+def GameOver() -> None:
     screen = pg.display.get_surface()
     
     go_img = pg.Surface((WIDTH, HEIGHT))
@@ -122,11 +122,12 @@ def GameOver():
     time.sleep(5)
     return main()
     
-def make_bomb_imgs_accs():
-    bb_imgs = []
-    bb_accs = [a/3 for a in range(1, 11)]
+#爆弾の大きさと速度に関する変数
+def make_bomb_imgs_accs() -> tuple[list[pg.Surface], list[float]]:
+    bb_imgs: list[pg.Surface] = []
+    bb_accs: list[float] = [a/3 for a in range(1, 11)]
     for r in range(1, 11):
-        bb_img = pg.Surface((20*r, 20*r), pg.SRCALPHA)
+        bb_img: pg.Surface = pg.Surface((20*r, 20*r), pg.SRCALPHA)
         pg.draw.circle(bb_img, (255, 0, 0), (10*r, 10*r), 10*r)
         bb_imgs.append(bb_img)
     return bb_imgs, bb_accs
@@ -172,7 +173,9 @@ def get_kk_img(sum_mv: tuple[int, int]) -> pg.Surface:
         key = (5, 5)
     return direction_imgs[key]
 
-def calc_orientation(org: pg.Rect, dst: pg.Rect, current_xy: tuple[float, float]) -> tuple[float, float]:
+def calc_orientation(
+    org: pg.Rect, dst: pg.Rect, current_xy: tuple[float, float]
+) -> tuple[float, float]:
     """
     orgから見てdstがどこにあるかを計算し，方向ベクトル（ノルム√50）を返す
     近すぎる場合はcurrent_xyを返す
