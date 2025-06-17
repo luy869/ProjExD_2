@@ -9,6 +9,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
 def main():
+    rmb_xy = 0
     pg.display.set_caption("逃げろ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bb_img = pg.Surface((20,20))
@@ -40,12 +41,27 @@ def main():
             if key_lst[key]:
                 sum_mv[0] += dx
                 sum_mv[1] += dy
+        old_pos = kk_rct.topleft
         kk_rct.move_ip(sum_mv)
         screen.blit(bb_img,bb_rct)
         screen.blit(kk_img, kk_rct)
         pg.display.update()
         tmr += 1
         clock.tick(50)
+        if check_bound(kk_rct) == 0:
+            kk_rct.topleft = old_pos
+            screen.blit(kk_img, kk_rct)
+            
+
+        
+
+def check_bound(rct):
+    if rct.x > 1050 or rct.x < 0:
+        return False
+    if rct.y > 600 or rct.y < 0:
+        return False
+    return True
+
 
 
 if __name__ == "__main__":
